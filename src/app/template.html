@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="__CSP__">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="qrbeam — Secure Offline File Transfer via QR Codes">
+  <title>qrbeam — オフラインQRファイル転送</title>
+  <style>__CSS__</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">▦</span><span>qrbeam<small>Secure Offline File Transfer via QR Codes</small></span></div>
+    <div class="environment"><span id="network-status">接続状態を確認中</span><span class="build">Build <b id="build-id"></b></span></div>
+  </header>
+  <main>
+    <nav class="steps" aria-label="転送の手順"><span id="step-prepare" aria-current="step">準備</span><span id="step-align">位置合わせ</span><span id="step-auth">コード照合</span><span id="step-transfer">転送・保存</span><span id="step-complete">完了</span></nav>
+    <div id="global-notice" class="notice" role="status" hidden></div>
+    <div id="security-warning" class="notice danger" role="alert" hidden>認証の不一致が連続しています。攻撃の可能性があります。転送を中止し、組織の情報セキュリティ担当者へ報告してください。</div>
+    <section id="setup" class="setup">
+      <div class="intro"><p class="eyebrow">画面とカメラで、ファイルを渡す</p><h1>オフラインで、<br>ファイルを転送。</h1><p>2台のPCを向かい合わせ、認証コードを照合してから転送します。1回に1ファイル、最大1 MiB。</p></div>
+      <div class="setup-card panel">
+        <h2>このPCの役割を選択</h2>
+        <div class="role-options"><button type="button" id="choose-sender" class="role-button"><strong>送信</strong><span>このPCのファイルを渡す</span></button><button type="button" id="choose-receiver" class="role-button"><strong>受信</strong><span>受け取ったファイルを保存する</span></button></div>
+        <section id="file-section" hidden><label for="file-input" class="field-label">送信するファイル</label><input id="file-input" type="file"><p id="file-description" class="muted">1 MiB（1,048,576バイト）以下・1ファイル</p></section>
+        <p id="receive-description" class="muted" hidden>検証成功後に「保存」を押して、保存先と名前を選びます。ファイルを自動で開くことはありません。</p>
+        <button type="button" id="begin" class="primary" disabled>次へ・カメラを許可</button>
+        <p id="capabilities" class="muted small" role="status"></p>
+      </div>
+      <aside class="operating-note"><strong>利用前の確認</strong><p>配布物の署名とハッシュを確認し、両PCのネットワーク接続を無効にしてください。周囲からの撮影や覗き見を防いでください。</p><p>開発版です。各OSの実機試験・第三者暗号レビュー・組織の利用承認は未完了です。初期検証対象はPC版Chrome / Edgeです。</p></aside>
+      <details class="settings panel"><summary>通信設定（実機評価用・開始前のみ変更可能）</summary><form id="settings-form"><fieldset id="settings-fields"><div class="settings-grid">
+        <label>DATA容量（バイト）<select name="payloadBytes"><option>128</option><option>256</option><option selected>512</option><option>768</option></select></label>
+        <label>ウィンドウ枚数<select name="windowSize"><option selected>1</option><option>2</option><option>4</option><option>8</option></select></label>
+        <label>表示間隔（ms）<input name="minFrameIntervalMs" type="number" min="150" max="3000" value="350" required></label>
+        <label>QR誤り訂正<select id="correction"><option>L</option><option selected>M</option><option>Q</option><option>H</option></select></label>
+        <label>鍵交換期限（ms）<input name="handshakeTimeoutMs" type="number" min="30000" max="600000" value="120000" required></label>
+        <label>承認待ち期限（ms）<input name="approvalWaitTimeoutMs" type="number" min="30000" max="600000" value="180000" required></label>
+        <label>保存待ち期限（ms）<input name="saveWaitTimeoutMs" type="number" min="60000" max="900000" value="300000" required></label>
+        <label>セッション期限（ms）<input name="sessionMaxLifetimeMs" type="number" min="600000" max="7200000" value="3600000" required></label>
+        <label>最大再表示回数<input name="maxRetries" type="number" min="10" max="1000" value="100" required></label>
+      </div><p class="muted small">両PCでDATA容量とウィンドウ枚数を合わせてください。Base45・4 KiBパディング・監査ログへの実サイズ記録なし。Enter誤承認防止は1,500 msです。</p></fieldset></form></details>
+    </section>
+    <section id="workspace" class="workspace" hidden>
+      <div class="session-heading"><div><p class="eyebrow" id="role-label"></p><h1 id="state-title" tabindex="-1">位置合わせ</h1></div><button type="button" id="cancel" class="quiet danger-text">中止</button></div>
+      <div class="workspace-grid">
+        <div class="control-column">
+          <section class="panel state-card" aria-live="polite" aria-atomic="true"><p id="state-description"></p><p id="remaining" class="muted small"></p><div id="auth-section" hidden><p class="field-label">両方の画面で6桁が同じことを確認</p><div id="sas-code" class="sas" aria-label="認証コード"></div><p class="muted">違う場合は「コードが違う・中止」を押してください。片方だけの承認では転送しません。</p><button type="button" id="approve" class="primary">コードが一致・開始</button><p id="enter-hint" class="muted small"></p><button type="button" id="mismatch" class="quiet danger-text">コードが違う・中止</button></div><div id="approval-status" hidden><p id="local-approval"></p><p id="peer-approval"></p></div><div id="progress-section" hidden><progress id="progress" max="1" value="0" aria-label="転送進捗"></progress><p id="progress-label"></p><p id="transfer-metrics" class="muted small"></p></div><div id="save-section" hidden><dl class="file-details"><dt>保存する名前</dt><dd id="received-name"></dd><dt>ファイルサイズ</dt><dd id="received-size"></dd></dl><p>GCM認証とファイルハッシュの検証に成功しました。</p><button type="button" id="save-file" class="primary">保存</button><p id="save-status" class="muted" role="status"></p></div><div id="completion-section" hidden><p class="digest-label">セッション内ファイルダイジェスト（HMAC）</p><code id="file-digest"></code><p class="digest-label">監査ログ識別子</p><code id="audit-id"></code></div><div class="end-actions"><button type="button" id="finish" class="primary" hidden>終了</button><button type="button" id="restart" class="primary" hidden>最初からやり直す</button><button type="button" id="export-audit" class="secondary" hidden>監査ログを保存</button></div></section>
+          <section class="panel camera-card"><div class="card-heading"><h2>相手の画面を撮影</h2><span id="camera-status" class="muted small">準備中</span></div><video id="camera-preview" muted autoplay playsinline aria-label="カメラのプレビュー"></video><label for="camera-select" class="field-label">使用するカメラ</label><select id="camera-select" aria-label="使用するカメラ"><option value="">既定のカメラ</option></select><p id="alignment-hint" class="muted small">相手のQR全体が映るように、画面の角度・距離・明るさを調整してください。</p></section>
+        </div>
+        <section class="panel qr-card"><div class="card-heading"><h2>相手のカメラに見せるQR</h2><span id="frame-status" class="muted small">準備中</span></div><div id="qr-position" class="qr-position position-center"><div id="qr-holder" class="qr-holder size-medium"><canvas id="qr-canvas" aria-label="光学通信用QRコード" role="img"></canvas></div></div><div class="qr-controls"><label>表示サイズ<select id="qr-size"><option value="small">小</option><option value="medium" selected>中</option><option value="large">大</option></select></label><label>表示位置<select id="qr-placement"><option value="left">左</option><option value="center" selected>中央</option><option value="right">右</option></select></label></div><p class="muted small">カメラとQRは終了操作まで動作します。保存後は、送信側の「転送完了」を確認してから終了してください。</p></section>
+      </div>
+    </section>
+  </main>
+  <footer><span>qrbeam · Offline by design</span><span>ECDH P-256 / AES-256-GCM / HMAC-SHA-256</span></footer>
+  <template id="third-party-licenses"><pre>__LICENSES__</pre></template>
+  <script>__JS__</script>
+</body>
+</html>

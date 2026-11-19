@@ -1,0 +1,34 @@
+{
+  "name": "qrbeam",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Secure offline file transfer via QR codes",
+  "author": "Synge Todo",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.19"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:browser": "npm run build && playwright test",
+    "check": "npm run typecheck && npm test && npm run build && node scripts/check-artifact.mjs",
+    "benchmark": "tsx scripts/benchmark.ts",
+    "verify": "node scripts/check-artifact.mjs"
+  },
+  "dependencies": {
+    "jsqr": "1.4.0",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.10.2",
+    "@types/qrcode": "1.5.5",
+    "esbuild": "0.24.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.9"
+  }
+}
