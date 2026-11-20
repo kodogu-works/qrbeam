@@ -50,9 +50,9 @@ jobs:
           cmp "$RUNNER_TEMP/qrbeam-SHA256SUMS" dist/SHA256SUMS
           npm run verify
 
-      - name: Install Chromium and system dependencies
+      - name: Install Chromium headless shell and system dependencies
         if: matrix.node == 26
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps --only-shell chromium
 
       - name: Run offline file browser E2E
         if: matrix.node == 26
