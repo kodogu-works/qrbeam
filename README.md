@@ -3,7 +3,7 @@
 **English** | [日本語](README.ja.md)
 
 [![CI](https://github.com/kodogu-works/qrbeam/actions/workflows/ci.yml/badge.svg)](https://github.com/kodogu-works/qrbeam/actions/workflows/ci.yml)
-![Node.js](https://img.shields.io/badge/node-%3E%3D18.19-339933?logo=nodedotjs&logoColor=white)
+![Node.js](https://img.shields.io/badge/node-%3E%3D22.12-339933?logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
 ![Status](https://img.shields.io/badge/status-development-orange)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -16,7 +16,7 @@ Key agreement uses ephemeral ECDH P-256 keys. Before the transfer begins, both u
 
 ## Build and verification
 
-Requires Node.js 18.19 or later and npm. Dependencies are needed only for development.
+Requires Node.js 22.12 or later and npm. Dependencies are needed only for development.
 
 ```sh
 npm ci
