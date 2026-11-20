@@ -50,16 +50,40 @@ jobs:
           cmp "$RUNNER_TEMP/qrbeam-SHA256SUMS" dist/SHA256SUMS
           npm run verify
 
-      - name: Install Chromium headless shell and system dependencies
-        if: matrix.node == 26
-        run: npx playwright install --with-deps --only-shell chromium
+  browser:
+    name: Browser E2E (Node 26)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      # Match @playwright/test in package-lock.json.
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --init --ipc=host
+    env:
+      CI: 'true'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run offline file browser E2E
-        if: matrix.node == 26
         run: npm run test:browser
 
+      - name: Inspect build artifact
+        run: npm run verify
+
       - name: Upload build artifacts
-        if: matrix.node == 26
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: qrbeam-build
@@ -72,7 +96,7 @@ jobs:
           retention-days: 14
 
       - name: Upload available browser failure diagnostics
-        if: failure() && matrix.node == 26
+        if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: browser-test-results
